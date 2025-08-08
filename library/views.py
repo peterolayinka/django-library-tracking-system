@@ -6,12 +6,14 @@ from rest_framework.decorators import action
 from django.utils import timezone
 from .tasks import send_loan_notification
 
+from .serializers import ExtendLoanSerializer
+
 class AuthorViewSet(viewsets.ModelViewSet):
     queryset = Author.objects.all()
     serializer_class = AuthorSerializer
 
 class BookViewSet(viewsets.ModelViewSet):
-    queryset = Book.objects.all()
+    queryset = Book.objects.all().select_related("author")
     serializer_class = BookSerializer
 
     @action(detail=True, methods=['post'])
@@ -49,6 +51,16 @@ class MemberViewSet(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
 
+    @action(detail=False, methods=['get'])
+    def top_active(self, request):
+        members = Member.objects.top_active()
+        serializer =  self.get_serializer_class(members, many=True)
+        return Response(serializer.data)
+
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
+
+    @action(detail=False, methods=['patch'], serializer_class=ExtendLoanSerializer)
+    def extend_due_date(self, request):
+        return self.partial_update(request)

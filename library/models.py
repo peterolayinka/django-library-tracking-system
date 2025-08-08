@@ -1,5 +1,11 @@
+from datetime import timedelta
+
 from django.db import models
+from django.utils import timezone
 from django.contrib.auth.models import User
+
+from .utils import configure_due_date
+from .querysets import MemberManager
 
 class Author(models.Model):
     first_name = models.CharField(max_length=100)
@@ -31,6 +37,8 @@ class Member(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     membership_date = models.DateField(auto_now_add=True)
     # Add more fields if necessary
+    objects = MemberManager()
+    
 
     def __str__(self):
         return self.user.username
@@ -40,7 +48,17 @@ class Loan(models.Model):
     member = models.ForeignKey(Member, related_name='loans', on_delete=models.CASCADE)
     loan_date = models.DateField(auto_now_add=True)
     return_date = models.DateField(null=True, blank=True)
+    due_date = models.DateField(null=True, blank=True, default=configure_due_date)
     is_returned = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.book.title} loaned to {self.member.user.username}"
+    
+    @property
+    def is_overdue(self):
+        return self.due_date < timezone.now().date()
+    
+    def extend_due_date(self, additional_days):
+        self.due_date += timedelta(additional_days)
+        self.save()
+        return self

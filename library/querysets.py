@@ -5,7 +5,7 @@ class MemberQuerySet(models.QuerySet):
     def top_active(self):
         return self.annotate(
             active_loans=models.Count("loans", models.Q(loans__is_returned=False))
-        ).order_by('-active_loans')[:5]
+        ).select_related("user").order_by('-active_loans')[:5]
 
 
 class MemberManager(models.Manager):

@@ -62,6 +62,6 @@ class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
 
-    @action(detail=False, methods=['patch'], serializer_class=ExtendLoanSerializer)
-    def extend_due_date(self, request):
+    @action(detail=True, methods=["patch"], serializer_class=ExtendLoanSerializer)
+    def extend_due_date(self, request, **kwargs):
         return self.partial_update(request)
